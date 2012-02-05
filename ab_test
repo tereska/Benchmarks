@@ -1,0 +1,15 @@
+#!/bin/bash
+
+sum=0
+count=50
+
+for (( i=0;i<$count;i++)); do
+  result=`taskset -c 7 ab -q -n100000 -c100 http://localhost:8080/ | grep "Requests per second" | grep -o -P "[0-9\.]+" | tr . .`
+  echo -n "$result "
+  sum=`echo $sum+$result | bc`
+done
+
+
+result=`echo $sum/$count | bc`
+echo -e "\n$result"
+
