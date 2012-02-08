@@ -1,17 +1,33 @@
 #!/bin/bash
 
+url="http://localhost:8080/"
+concurrency=100
+requests=10000
+cpu_core=7
+
+
 sum=0
-count=100
+count=10
 min=99999999
 max=0
 
+sum_l90=0
+sum_freq=0
 
 for (( i=0;i<$count;i++)); do
-  result=`taskset -c 7 ab -q -n10000 -c100 http://localhost:8080/ | grep "Requests per second" | grep -o -P "[0-9\.]+" | tr . .`
-  echo -n "$result "
-  sum=`echo $sum+$result | bc`
+  result=`taskset -c $cpu_core ab -q -n$requests -c$concurrency $url`
+  rps=`echo -e -n "$result" | grep "Requests per second" | grep -o -P "[0-9\.]+" `
+  l90=`echo -e -n "$result" | grep "90%" | awk {'print $2'}`
+  freq=`echo -e -n "$result" | grep "Failed requests" | awk {'print $3'}`
+  
+  printf "#%3.3d. " "$i"
+  echo -e "rs=$rps l90=$l90 f_req=$freq"
 
-  resultint=`echo $result | tr . " " | awk {'print $1'}`
+  sum=`echo $sum+$rps | bc`
+  sum_l90=`echo $sum_l90+$l90 | bc`
+  sum_freq=`echo $sum_freq+$freq | bc`
+
+  resultint=`echo $rps | tr . " " | awk {'print $1'}`
   if [ $resultint -gt $max ]; then
     max=$resultint
   fi
@@ -25,5 +41,6 @@ done
 
 
 result=`echo $sum/$count | bc`
-echo -e "\nmin=$min avg=$result max=$max"
+avg_l90=`echo $sum_l90/$count | bc`
+echo -e "\nmin=$min avg=$result max=$max avg_l90=$avg_l90 sum_freq=$sum_freq\n"
 
