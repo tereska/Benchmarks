@@ -7,7 +7,7 @@ max=0
 
 
 for (( i=0;i<$count;i++)); do
-  result=`taskset -c 7 ab -q -n100000 -c100 http://localhost:8080/ | grep "Requests per second" | grep -o -P "[0-9\.]+" | tr . .`
+  result=`taskset -c 7 ab -q -n10000 -c100 http://localhost:8080/ | grep "Requests per second" | grep -o -P "[0-9\.]+" | tr . .`
   echo -n "$result "
   sum=`echo $sum+$result | bc`
 
